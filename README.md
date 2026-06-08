@@ -20,17 +20,3 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 ---
 
 Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
-
-
-PLANO:
-
-- Controle entrada e saida de navios  
-- Valores de tarifa por tipo de carga  
-- Armazenamento no patio  
-- Destinos das cargas  
-  
-Models:  
-- class Navio, enum TipoNavio
-- class Carga, enum TipoCarga (carros, grãos, variados, etc.)
-- classes Cais, Patio.
-- class Destino

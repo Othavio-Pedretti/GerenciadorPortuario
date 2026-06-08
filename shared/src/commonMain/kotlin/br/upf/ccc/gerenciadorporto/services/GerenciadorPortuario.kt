@@ -1,4 +1,4 @@
-package br.upf.ccc.gerenciadorporto
+package br.upf.ccc.gerenciadorporto.services
 
 import br.upf.ccc.gerenciadorporto.model.Navio
 import br.upf.ccc.gerenciadorporto.model.SetorPatio

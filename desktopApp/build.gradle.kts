@@ -26,3 +26,15 @@ compose.desktop {
         }
     }
 }
+
+tasks.register<JavaExec>("runConsole") {
+    group = "application"
+    description = "Console"
+
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("br.upf.ccc.gerenciadorporto.ConsoleAppKt")
+
+    standardInput = System.`in`
+    standardOutput = System.out
+    errorOutput = System.err
+}

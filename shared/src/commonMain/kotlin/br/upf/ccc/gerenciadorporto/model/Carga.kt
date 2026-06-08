@@ -5,13 +5,11 @@ abstract class Carga(
     val peso: Double,
     val volume: Double,
     val destinatario: String,
-    val destino: String, val
-    metodoTransporte: MetodoTransporte
+    val destino: String,
+    val metodoTransporte: MetodoTransporte
 ) {
     abstract fun calcularTarifaBase(): Double
 }
-
-enum class TipoConteiner { PADRAO, REFRIGERADO, PERIGOSO }
 
 class CargaConteiner(
     id: String,
@@ -42,6 +40,9 @@ class CargaConteiner(
     }
 }
 
+enum class TipoConteiner { PADRAO, REFRIGERADO, PERIGOSO }
+
+
 class CargaGranel(
     id: String,
     peso: Double,
@@ -49,7 +50,7 @@ class CargaGranel(
     destinatario: String,
     destino: String,
     metodoTransporte: MetodoTransporte,
-    val tipoGranel: String
+    val tipoGranel: TipoGranel
 ) : Carga(id, peso, volume, destinatario, destino, metodoTransporte) {
 
     override fun calcularTarifaBase(): Double {
@@ -58,8 +59,5 @@ class CargaGranel(
     }
 }
 
-enum class MetodoTransporte {
-    MARITIMO,
-    FERROVIARIO,
-    RODOVIARIO
-}
+enum class TipoGranel { GRAOS, MINERIO, LIQUIDO }
+enum class MetodoTransporte { MARITIMO, FERROVIARIO, RODOVIARIO }
