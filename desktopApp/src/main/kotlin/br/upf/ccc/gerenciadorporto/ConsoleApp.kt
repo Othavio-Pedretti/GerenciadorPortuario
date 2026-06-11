@@ -1,6 +1,7 @@
 package br.upf.ccc.gerenciadorporto
 import br.upf.ccc.gerenciadorporto.model.*
 import br.upf.ccc.gerenciadorporto.services.*
+import kotlin.reflect.KClass
 
 
 fun main() {
@@ -10,8 +11,8 @@ fun main() {
 class ConsoleApp {
 
     private val vagas = mutableListOf(
-        VagaCais(numero = 1, tiposPermitidos = setOf(TipoNavio.PORTA_CONTAINER, TipoNavio.CARGA_GERAL), navio = null),
-        VagaCais(numero = 2, tiposPermitidos = setOf(TipoNavio.GRANELEIRO), navio = null)
+        VagaCais(numero = 1, navio = null),
+        VagaCais(numero = 2, navio = null)
     )
 
     private val setoresPatio = mutableListOf(
@@ -19,14 +20,14 @@ class ConsoleApp {
             id = "P1",
             nome = "Pátio Conteineres",
             capacidadeMaxima = 100_000.0,
-            tipoCarga = CargaConteiner::class.java,
+            tipoCarga = CargaConteiner::class,
             cargasArmazenadas = mutableListOf()
         ),
         SetorPatio(
             id = "P2",
             nome = "Pátio Granel",
             capacidadeMaxima = 200_000.0,
-            tipoCarga = CargaGranel::class.java,
+            tipoCarga = CargaGranel::class,
             cargasArmazenadas = mutableListOf()
         )
     )
@@ -52,6 +53,7 @@ class ConsoleApp {
                 3 -> descarregarNavio()
                 4 -> consultarEstado()
                 5 -> registrarSaidaCarga()
+                6 -> registrarSaidaNavio()
                 0 -> {
                     println("Encerrando aplicação...")
                     break
@@ -70,6 +72,7 @@ class ConsoleApp {
         println("3 - Descarregar navio")
         println("4 - Consultar estado do porto")
         println("5 - Registrar saída de carga")
+        println("6 - Registrar saída de navio")
         println("0 - Sair")
         print("Escolha uma opção: ")
     }
@@ -84,7 +87,6 @@ class ConsoleApp {
         val navio = Navio(
             id = lerTexto("ID navio: "),
             nome = lerTexto("Nome navio: "),
-            categoria = lerTipoNavio(),
             cargas = lerCargasDoNavio(),
             status = StatusNavio.ANCORADO
         )
@@ -93,6 +95,7 @@ class ConsoleApp {
         if (sucesso) {
             navios.add(navio)
             println("Navio registrado.")
+            println(navio)
         } else {
             println("Já existe um navio com esse ID.")
         }
@@ -106,6 +109,8 @@ class ConsoleApp {
         val sucesso = gerenciador.atracarNavio(navioId, numeroVaga)
         if (sucesso) {
             println("Navio atracado.")
+            println(vagas.find { it.numero == numeroVaga })
+            println(navios.find { it.id == navioId })
         } else {
             println("Falha ao atracar o navio.")
         }
@@ -116,28 +121,21 @@ class ConsoleApp {
         val navioId = lerTexto("ID do navio: ")
         gerenciador.descarregarNavio(navioId)
         println("Processo de descarregamento executado.")
+        println(navios.find { it.id == navioId })
     }
 
     private fun consultarEstado() {
         println("\nEstado do Porto")
 
         println("\n- Vagas de cais: ")
-        vagas.forEach { vaga ->
-            val navioAtual = vaga.navio?.nome ?: "Vazia"
-            println("Vaga ${vaga.numero} | Ocupada: ${vaga.ocupada} | Navio: $navioAtual")
-        }
+        vagas.forEach { println(it) }
 
         println("\n- Setores do pátio: ")
-        setoresPatio.forEach { setor ->
-            println(
-                "${setor.nome} | Ocupação: ${setor.ocupacaoAtual}/${setor.capacidadeMaxima} | Cargas: ${setor.cargasArmazenadas.size}"
-            )
-        }
 
+        setoresPatio.forEach { println(it) }
         println("\n- Navios registrados: ")
-        navios.forEach { navio ->
-            println("${navio.id} - ${navio.nome} | Categoria: ${navio.categoria} | Status: ${navio.status}")
-        }
+
+        navios.forEach { println(it) }
     }
 
     private fun registrarSaidaCarga() {
@@ -147,34 +145,32 @@ class ConsoleApp {
 
         if (sucesso) {
             println("Carga removida.")
+            consultarEstado()
         } else {
             println("Carga não encontrada.")
         }
     }
 
-    private fun lerTexto(rotulo: String): String {
-        print("$rotulo: ")
-        return readlnOrNull().orEmpty().trim()
+    private fun registrarSaidaNavio() {
+        println("\nRegistrar Saída de Navio")
+        val navioId = lerTexto("ID do navio:")
+        val sucesso = gerenciador.liberarNavio(navioId)
+
+        if (sucesso) {
+            println("Navio saiu do porto.")
+            consultarEstado()
+        }
+        else println("Navio não encontrado.")
     }
 
-    private fun lerTipoNavio(): TipoNavio {
-        println("Tipos disponíveis:")
-        TipoNavio.entries.forEachIndexed { index, tipo ->
-            println("${index + 1} - $tipo")
-        }
-
-        while (true) {
-            val opcao = lerTexto("Escolha o tipo do navio: ").toIntOrNull()
-            if (opcao != null && opcao in 1..TipoNavio.entries.size) {
-                return TipoNavio.entries[opcao - 1]
-            }
-            println("Tipo inválido, tente novamente.")
-        }
+    private fun lerTexto(rotulo: String): String {
+        print(rotulo)
+        return readlnOrNull().orEmpty().trim()
     }
 
     private fun lerCargasDoNavio(): List<Carga> {
         val cargas = mutableListOf<Carga>()
-        val quantidade = lerTexto("Quantidade de cargas do navio").toIntOrNull() ?: 0
+        val quantidade = lerTexto("Quantidade de cargas do navio: ").toIntOrNull() ?: 0
 
         repeat(quantidade) { indice ->
             println("\nCarga ${indice + 1}")
@@ -190,7 +186,7 @@ class ConsoleApp {
         println("1 - Contêiner")
         println("2 - Granel")
 
-        return when (lerTexto("Escolha").toIntOrNull()) {
+        val carga = when (lerTexto("Escolha: ").toIntOrNull()) {
             1 -> lerCargaConteiner()
             2 -> lerCargaGranel()
             else -> {
@@ -198,27 +194,31 @@ class ConsoleApp {
                 lerCargaConteiner()
             }
         }
+
+        println("Tarifa: ${carga.calcularTarifaBase()} reais")
+
+        return carga
     }
 
     private fun lerCargaConteiner(): CargaConteiner {
         return CargaConteiner(
             id = lerTexto("ID carga: "),
-            peso = lerTexto("Peso: ").toDoubleOrNull() ?: 0.0,
-            volume = lerTexto("Volume: ").toDoubleOrNull() ?: 0.0,
+            nome = lerTexto("Nome da carga: "),
+            qtdContaineres = lerTexto("Quantidade de Containeres: ").toIntOrNull() ?: 0,
+            tamanho = lerTexto("Tamanho dos containeres (6 ou 12): ").toIntOrNull() ?: 6,
             destinatario = lerTexto("Destinatário: "),
             destino = lerTexto("Destino: "),
             metodoTransporte = lerMetodoTransporte(),
-            tamanho = lerTexto("Tamanho (6 ou 12): ").toIntOrNull() ?: 6,
-            tipo = lerTipoConteiner(),
-            diasNoPatio = lerTexto("Dias no pátio: ").toIntOrNull() ?: 0
+            diasNoPatio = lerTexto("Dias no pátio: ").toIntOrNull() ?: 0,
+            tipo = lerTipoConteiner()
         )
     }
 
     private fun lerCargaGranel(): CargaGranel {
         return CargaGranel(
             id = lerTexto("ID carga: "),
-            peso = lerTexto("Peso: ").toDoubleOrNull() ?: 0.0,
-            volume = lerTexto("Volume: ").toDoubleOrNull() ?: 0.0,
+            nome = lerTexto("Nome da carga: "),
+            volume = lerTexto("Volume (m³): ").toDoubleOrNull() ?: 0.0,
             destinatario = lerTexto("Destinatário: "),
             destino = lerTexto("Destino: "),
             metodoTransporte = lerMetodoTransporte(),
